@@ -6,9 +6,8 @@ import pandas
 import json
 
 """
-Prend le champ website renseigné et cherche si il est mentionné 
-dans le .csv et rempli les autres champs associés à ce site dans 
-notre formulaire
+Prend le champ website renseigné et mentionne ses champs associés
+ou fourni un message d'erreur
 """
 def search_website():
     website_selected = website_entry.get()
@@ -20,10 +19,7 @@ def search_website():
     except IndexError as index_error:
         messagebox.showinfo(title="Error",message=f"You have provided an incorrect website, here's the error : \n\n {index_error}")
     else:
-        email_entry.delete(0, tkinter.END)
-        email_entry.insert(0, website_found[0][0])
-        password_entry.delete(0, tkinter.END)
-        password_entry.insert(0, website_found[0][1])
+        messagebox.showinfo(title=website_selected,message=f"Email: {website_found[0][0]}\nPassword: {website_found[0][0]}")
 
 """
 Génère un MDP alétoire
