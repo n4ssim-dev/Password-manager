@@ -3,6 +3,22 @@ import pyperclip
 from tkinter import messagebox
 import random
 import pandas
+import json
+
+def search_website():
+    website_selected = website_entry.get()
+    website_file = pandas.read_csv('password_list.csv')
+    website_found = [[row["Email"], row["Password"]] for _, row in website_file.iterrows() if row["Website"] == website_selected]
+
+    try:
+        check_index = website_found[0][0]
+    except IndexError as index_error:
+        messagebox.showinfo(title="Error",message=f"You have provided an incorrect website, here's the error : \n\n {index_error}")
+    else:
+        email_entry.delete(0, tkinter.END)
+        email_entry.insert(0, website_found[0][0])
+        password_entry.delete(0, tkinter.END)
+        password_entry.insert(0, website_found[0][1])
 
 def generate_password():
     password_entry.delete(0,tkinter.END)
@@ -28,7 +44,7 @@ def generate_password():
     password_entry.insert(0,password)
 
 
-def save_password():
+def save_credentials():
     website_selected = website_entry.get()
     email_selected = email_entry.get()
     password_selected = password_entry.get()
@@ -36,7 +52,8 @@ def save_password():
     if not website_selected or not email_selected or not password_selected:
         messagebox.showinfo(title="Oops :/", message="You haven't provided the required credentials..")
     else:
-        ok_or_cancel = messagebox.askokcancel(title=website_selected,message=f"These are your details : \n\nWebsite: {website_selected}\nEmail: {email_selected}\nPassword: {password_selected}\n\nAre you sure ?")
+        ok_or_cancel = messagebox.askokcancel(title=website_selected,
+                                            message=f"These are your details : \n\nWebsite: {website_selected}\nEmail: {email_selected}\nPassword: {password_selected}\n\nAre you sure ?")
         if ok_or_cancel:
             new_data = {
                 'Website': [website_selected],
@@ -44,18 +61,40 @@ def save_password():
                 'Password': [password_selected]
             }
 
-            # Utilise un try/expect afin de soit créer ou modifier le csv
+            json_data = {
+                website_selected: {
+                    "Email": email_selected,
+                    "Password": password_selected
+                }
+            }
+
             try:
-                df = pandas.read_csv("password_list.csv")
-                df = pandas.concat([df, pandas.DataFrame(new_data)])
-            except FileNotFoundError:
-                df = pandas.DataFrame(new_data)
+                # Handle CSV file
+                try:
+                    df = pandas.read_csv("password_list.csv")
+                    df = pandas.concat([df, pandas.DataFrame(new_data)], ignore_index=True)
+                except FileNotFoundError:
+                    df = pandas.DataFrame(new_data)
 
+                # Handle JSON file - PROPERLY APPENDING DATA
+                try:
+                    with open("data.json", "r") as j_df:
+                        existing_data = json.load(j_df)
+                        existing_data.update(json_data)  # This merges the new data with existing
+                except FileNotFoundError:
+                    existing_data = json_data  # If file doesn't exist, use new data as base
 
-            df.to_csv('password_list.csv',index=False)
-            website_entry.delete(0, tkinter.END)
-            password_entry.delete(0, tkinter.END)
-            print("Password saved successfully !")
+                # Save both files
+                df.to_csv('password_list.csv', index=False)
+                with open("data.json", "w") as j_df:
+                    json.dump(existing_data, j_df, indent=4)  # Save the merged data
+
+            except Exception as e:
+                messagebox.showerror(title="Error", message=f"Failed to save data: {str(e)}")
+            else:
+                website_entry.delete(0, tkinter.END)
+                password_entry.delete(0, tkinter.END)
+                messagebox.showinfo(title="Success", message="Password saved successfully!")
 
 
 
@@ -79,16 +118,18 @@ password_label = tkinter.Label(text="Password:", pady=5)
 website_entry = tkinter.Entry(width=35)
 website_entry.focus()
 email_entry = tkinter.Entry(width=35)
-email_entry.insert(0,"achnassim34@gmail.com")
+email_entry.insert(0,"my-email-adress@outlook.com")
 password_entry = tkinter.Entry(width=21)
 
 # Buttons
+search_button = tkinter.Button(text="Search", command=search_website,width=14)
 generate_button = tkinter.Button(text="Generate Password",command=generate_password)
-add_button = tkinter.Button(text="Add", command=save_password, width=36)
+add_button = tkinter.Button(text="Add", command=save_credentials, width=36)
 
 # UI Grid
 website_label.grid(column=0, row=1, sticky="e")
-website_entry.grid(column=1, row=1, columnspan=2, sticky="ew")
+website_entry.grid(column=1, row=1, sticky="ew")
+search_button.grid(column=2,row=1)
 
 email_label.grid(column=0, row=2, sticky="e")
 email_entry.grid(column=1, row=2, columnspan=2, sticky="ew")
