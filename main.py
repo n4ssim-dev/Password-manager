@@ -5,6 +5,11 @@ import random
 import pandas
 import json
 
+"""
+Prend le champ website renseigné et cherche si il est mentionné 
+dans le .csv et rempli les autres champs associés à ce site dans 
+notre formulaire
+"""
 def search_website():
     website_selected = website_entry.get()
     website_file = pandas.read_csv('password_list.csv')
@@ -20,6 +25,9 @@ def search_website():
         password_entry.delete(0, tkinter.END)
         password_entry.insert(0, website_found[0][1])
 
+"""
+Génère un MDP alétoire
+"""
 def generate_password():
     password_entry.delete(0,tkinter.END)
 
@@ -43,7 +51,10 @@ def generate_password():
     pyperclip.copy(password)
     password_entry.insert(0,password)
 
-
+"""
+Enregistre dans le .csv et le .json avec les informations renseignées
+dans le formulaire
+"""
 def save_credentials():
     website_selected = website_entry.get()
     email_selected = email_entry.get()
@@ -69,14 +80,14 @@ def save_credentials():
             }
 
             try:
-                # Handle CSV file
+                # Créé ou modifie le password_list.csv
                 try:
                     df = pandas.read_csv("password_list.csv")
                     df = pandas.concat([df, pandas.DataFrame(new_data)], ignore_index=True)
                 except FileNotFoundError:
                     df = pandas.DataFrame(new_data)
 
-                # Handle JSON file - PROPERLY APPENDING DATA
+                # Créé ou modifie le password_list.csv
                 try:
                     with open("data.json", "r") as j_df:
                         existing_data = json.load(j_df)
@@ -84,7 +95,7 @@ def save_credentials():
                 except FileNotFoundError:
                     existing_data = json_data  # If file doesn't exist, use new data as base
 
-                # Save both files
+                # Enregistre les deux fichiers
                 df.to_csv('password_list.csv', index=False)
                 with open("data.json", "w") as j_df:
                     json.dump(existing_data, j_df, indent=4)  # Save the merged data
